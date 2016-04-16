@@ -234,6 +234,9 @@ void HTTPClient::setSession(bool usingSession) {
     _usingSession = usingSession;
 }
 
+void HTTPClient::setCookie(String cookie){
+    _cookie = cookie;
+}
 /**
  * set User Agent
  * @param userAgent const char *
@@ -329,16 +332,13 @@ int HTTPClient::sendRequest(const char * type, uint8_t * payload, size_t size) {
     if(!connect()) {
         return returnError(HTTPC_ERROR_CONNECTION_REFUSED);
     }
-
     if(payload && size > 0) {
         addHeader("Content-Length", String(size));
     }
-
     // send Header
     if(!sendHeader(type)) {
         return returnError(HTTPC_ERROR_SEND_HEADER_FAILED);
-    }
-
+    }    
     // send Payload if needed
     if(payload && size > 0) {
         if(_tcp->write(&payload[0], size) != size) {
@@ -618,7 +618,9 @@ String HTTPClient::getString(void) {
     writeToStream(&sstring);
     return sstring;
 }
-
+String HTTPClient::getCookie(void){
+    return _cookie;
+}
 /**
  * converts error code to String
  * @param error int
@@ -786,7 +788,6 @@ bool HTTPClient::sendHeader(const char * type) {
     if(!connected()) {
         return false;
     }
-
     String header = String(type) + " " + _url + " HTTP/1.";
 
     if(_useHTTP10) {
@@ -799,29 +800,24 @@ bool HTTPClient::sendHeader(const char * type) {
             "Host: " + _host + "\r\n"
             "User-Agent: " + _userAgent + "\r\n"
             "Connection: ";
-
     if(_reuse) {
         header += "keep-alive";
     } else {
         header += "close";
     }
     header += "\r\n";
-
     if(_usingSession){
         header += "Cookie: " + _cookie + "\r\n";
     }
-
     if(!_useHTTP10) {
         header += "Accept-Encoding: identity;q=1,chunked;q=0.1,*;q=0\r\n";
     }
 
     if(_base64Authorization.length()) {
         header += "Authorization: Basic " + _base64Authorization + "\r\n";
-    }
-
+    }    
     header += _Headers + "\r\n";
-
-    return (_tcp->write(header.c_str(), header.length()) == header.length());
+    return (_tcp->write((const uint8_t *) header.c_str(), header.length()) == header.length());
 }
 
 /**
@@ -841,8 +837,9 @@ int HTTPClient::handleHeaderResponse() {
     unsigned long lastDataTime = millis();
 
     while(connected()) {
-        size_t len = _tcp->available();
+        size_t len = _tcp->available();        
         if(len > 0) {
+            //Serial.printf("received: %d\n",len);
             String headerLine = _tcp->readStringUntil('\n');
             headerLine.trim(); // remove \r
 
@@ -854,7 +851,7 @@ int HTTPClient::handleHeaderResponse() {
                 _returnCode = headerLine.substring(9, headerLine.indexOf(' ', 9)).toInt();
             }else if(headerLine.indexOf(':')) {
                 String headerName = headerLine.substring(0, headerLine.indexOf(':'));
-                String headerValue = headerLine.substring(headerLine.indexOf(':') + 2);                
+                String headerValue = headerLine.substring(headerLine.indexOf(':') + 2);   
                 if(headerName.equalsIgnoreCase("Content-Length")) {
                     _size = headerValue.toInt();
                 }

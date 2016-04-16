@@ -1,6 +1,5 @@
-/**
- * ESP8266HTTPClient.h
- *
+/*
+
  * Created on: 02.11.2015
  *
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
@@ -32,8 +31,10 @@
 #endif
 
 #ifndef DEBUG_HTTPCLIENT
-#define DEBUG_HTTPCLIENT(...)
+#define DEBUG_HTTPCLIENT(...) 
 #endif
+
+//#define DEBUG_HTTPCLIENT(...) Serial.printf( __VA_ARGS__ )
 
 #define HTTPCLIENT_DEFAULT_TCP_TIMEOUT (5000)
 
@@ -137,6 +138,7 @@ class HTTPClient {
 
         void setReuse(bool reuse); /// keep-alive
         void setSession(bool usingSession); /// parse cookie session
+        void setCookie(String cookie);
         void setUserAgent(const char * userAgent);
         void setAuthorization(const char * user, const char * password);
         void setAuthorization(const char * auth);
@@ -169,7 +171,7 @@ class HTTPClient {
         WiFiClient * getStreamPtr(void);
         int writeToStream(Stream * stream);
         String getString(void);
-
+        String getCookie(void);
         static String errorToString(int error);
 
     protected:
