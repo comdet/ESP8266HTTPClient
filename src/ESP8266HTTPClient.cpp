@@ -309,6 +309,19 @@ int HTTPClient::POST(uint8_t * payload, size_t size) {
 int HTTPClient::POST(String payload) {
     return POST((uint8_t *) payload.c_str(), payload.length());
 }
+/**
+ * sends a put request to the server
+ * @param payload uint8_t *
+ * @param size size_t
+ * @return http code
+ */
+int HTTPClient::PUT(uint8_t * payload, size_t size) {
+    return sendRequest("PUT", payload, size);
+}
+
+int HTTPClient::PUT(String payload) {
+    return POST((uint8_t *) payload.c_str(), payload.length());
+}
 
 /**
  * sendRequest
